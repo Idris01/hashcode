@@ -1,13 +1,9 @@
 import os
-
 import argparse
-
 from random import randint
 import datetime as d
 from pathlib import Path
 import datetime
-
-
 
 
 parser=argparse.ArgumentParser()
@@ -49,7 +45,7 @@ def deliver_pizzas(file,output_file):
 
 	delivery_file=""
 
-	ingredients=[]
+	pizzas=[] # holds a list of pizzas thats processed at a go; just like a tray of pizzaa
 	count=0
 	
 
@@ -70,39 +66,43 @@ def deliver_pizzas(file,output_file):
 				continue
 
 
-			ingredients.append({f"{count-2}":data.strip().split(" ")[1:]})
+			pizzas.append({f"{count-2}":data.strip().split(" ")[1:]})
 
-			if len(ingredients)==50 or len(ingredients)==pizzas_and_teams[0]:
-				ingredients.sort(key=ingredients_count)
+			if len(pizzas)==50 or len(pizzas)==pizzas_and_teams[0]: # process 
+				pizzas.sort(key=ingredients_count) # this can be improved to sort based on how each ingredient differs
 				while(True):
-					s_team=""
+					s_team="" # A specific team to serve, t2, t3 or t4
+          
 					if waiting_team is not None:
+            # theres an awaing team when the tray was cleared
 					  s_team=waiting_team
 					  waiting_team=None
-					  
 					else:
-					  s_team=choose_team(teams)
+            # no waiting team so choose one
+					  s_team=choose_team(teams) 
 					  
 					if s_team==None:
-					  order_complete=True
+					  order_complete=True # At this point there is no more team to serve
 					  break 
 					
-					if team_as_num(s_team) > len(ingredients):
-						waiting_team=s_team
-						ingredients.clear()
+					if team_as_num(s_team) > len(pizzas):
+						waiting_team=s_team # the team will wait for the next tray of pizzas
+						pizzas.clear()  # The tray is prepared for new pizzas
 						break
 
 					
-					submit_file.write(deliver(s_team,ingredients))
+					submit_file.write(deliver(s_team,pizzas))
 					delivery_count+=1
-				if order_complete:
+				if order_complete: 
 					break
 		# print(f"{delivery_count} teams in total received pizzas")
 		# print(f"{pizzas_and_teams}")
 		# print(f"teams info after delivery {teams}")
 	
 
-	submit_file.close()
+	submit_file.close() # its necessary to close this file because at this point writting is completed
+  
+  #---------------------- processing the file to the required specification----------------------
 	new_file=f'{file[0]}_submissiontest{datetime.datetime.now().__format__("%H%M%S")}.txt'
 	with open(new_file,"a") as nf:
 		nf.write(f'{delivery_count}\n')
@@ -168,8 +168,9 @@ def team_as_num(team):
 	else:
 		return 4
 
+ # The large_team is a team selection that selects the team with the highest
+ # members before those of lower memebers
 def large_team(teams):
-	
 	if list(filter(lambda x: list(x.keys())[0] == "t4",teams)):
 		index=findindex("t4", teams)
 		teams[index]["t4"] -=1
@@ -182,6 +183,7 @@ def large_team(teams):
 		teams[0]["t2"] -=1
 		return "t2"
 
+  # this returns the index of a given team "t" in a list of teams "teams"
 def findindex(t, teams):
 	count=0
 	for i in teams:
@@ -226,3 +228,4 @@ if __name__ == "__main__":
 			deliver_pizzas(args.file_name,args.output_name)
 	else:
 		print(f'\"{input_data_set}\" not found')
+
